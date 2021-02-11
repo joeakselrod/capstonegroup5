@@ -1,9 +1,10 @@
-//Joseph Akselrod rev 0.2.1
-//2-7-21
+//Joseph Akselrod rev 0.2.2
+//2-10-21
 //left foot peripheral device 
 
 #include <ArduinoBLE.h>
 #include <Filters.h>
+#include <SoftwareSerial.h> 
 
 //define uuid for all BLE services/characteristics 
 const String left_foot_uuid = "4b072a8c-447a-4552-a49f-3fc072368892";
@@ -26,10 +27,17 @@ BLEService leftFoot(left_foot_uuid);  //should be 128 bit random generated uuid;
 BLECharCharacteristic stream(stream_uuid, BLEWrite);
 BLECharCharacteristic calibration(calibration_uuid, BLEWrite);
 
+//Setup Serial Communications to HC05
+SoftwareSerial rssiBT(0,1); //rx and tx pins
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*Helper Functions below here*/
 void calibrate()
 {
+  
+
+  
   //get standing weight, standing RSSI(distance), then sitting weight
   //first get user to stand and press toggle button (select)
   Serial.print("please stand normally and press toggle button");
@@ -82,17 +90,45 @@ int getSittingWeight()
   return(analogRead(sensorPin));
 }
 
+void rssiBTSetup()
+{
+  //Setup Serial and BT connection for RSSI
+  rssiBT.write(AT+INIT);
+  if(rssiBT.read()
+//AT+INIT 
+//OK
+//AT+IAC=9e8b33
+//OK 
+//AT+CLASS=0
+//AT+INQM=1,9,48
+//AT+INQ
+//+INQ:2:72:D2224,3E0104,FFBC
+//+INQ:1234:56:0,1F1F,FFC1
+//+INQ:1234:56:0,1F1F,FFC0
+//+INQ:1234:56:0,1F1F,FFC1
+//+INQ:2:72:D2224,3F0104,FFAD
+//+INQ:1234:56:0,1F1F,FFBE
+//+INQ:1234:56:0,1F1F,FFC2
+//+INQ:1234:56:0,1F1F,FFBE
+//+INQ:2:72:D2224,3F0104,FFBC OK
+
+//https://www.instructables.com/How-to-Configure-HC-05-Bluetooth-Module-As-Master-/
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() 
 {
     //serial baud rate at 9600 bps
   Serial.begin(9600);
- 
+  rssiBT.begin(38400);  //Baud Rate for AT-command Mode.
+  
     //set pinmode
   pinMode(LED_BUILTIN, OUTPUT); 
   pinMode(sensorPin, INPUT);
   pinMode(select, INPUT);
+
+  
 
 
     //initialize BLE  
@@ -116,6 +152,7 @@ void setup()
 
 void loop() 
 {
+  
   BLEDevice central = BLE.available();
 
   if (central) {
@@ -129,6 +166,7 @@ void loop()
     while(central.connected())
     {
       //find and tx calibration data
+        rssiBTSetup();
         calibrate();
         delay(2000);
       //tx sensor and RSSI data (potentially accelerometer) as stream(loop)
