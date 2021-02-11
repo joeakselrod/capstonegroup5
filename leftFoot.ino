@@ -81,13 +81,13 @@ int getStandingWeight()
 {
   return(analogRead(sensorPin));
 }
-int getStandingRssi()
+String getStandingRssi()
 {
-  int distance = 0;
+  String distance = "0000";
   //use HC-05 to get RSSI data from Right foot HC05
   //parse serial data and convert hex data
-  String toBeParsed = rssiBT.read();
-  serialParse(toBeParsed);
+  char toBeParsed[] = rssiBT.read();
+  distance = serialParse(toBeParsed);
   return distance;
 }
 
@@ -96,17 +96,22 @@ int getSittingWeight()
   return(analogRead(sensorPin));
 }
 
-String serialParse(String array)
+String serialParse(char array[])
 {
   //THIS IS FUCKING DIFFICULT; SOMEONE HELP WE WITH THIS PLSSSSSS
   //Parse data from the RSSI serial o/p
+
+  //need to parse this > +INQ:2:72:D2224,3E0104,FFBC
+  char *strings[10];
+  char *ptr = NULL;
+
   byte index = 0;
-  ptr = strtok(array, ":;");  // takes a list of delimiters
+  ptr = strtok(array, ":,");  // takes a list of delimiters
   while(ptr != NULL)
   {
       strings[index] = ptr;
       index++;
-      ptr = strtok(NULL, ":;");  // takes a list of delimiters
+      ptr = strtok(NULL, ":,");  // takes a list of delimiters
   }
   //print the last part of the string (second )
   Serial.println(strings[2]); //play with strings[x] until we find correct data
@@ -123,14 +128,15 @@ void rssiBTSetup()
   //connect to specific BT address
   rssiBT.write(AT+BIND = 1234,56,abcdef\r\n);  //connect to address 12:34:56:ab:cd:ed
   delay(500);
-  if(rssiBT.read() == "OK")
+  if(strcmp("OK", rssiBT.read()) == 0)
     {
       rssiBT.write(AT+CLASS=0\r\n);
       rssiBT.write(AT+INQM = 1,2,48\r\n); //set rssi inquiry for 2 devices up to 60 seconds
+      //loop inquiry command so that we dont have timeout on the RSSI connection
       while(loopINQ == true)
       {
         rssiBT.write(AT+INQ\r\n); //gets address, class, and RSSI in hex
-        if(rssiBT.read() == "OK");
+        if(strcmp("OK", rssiBT.read()) == 0); //if there is an "OK" when the serial o/p is finished with inq command, request inq again
         loopINQ = true;
       }
     }
