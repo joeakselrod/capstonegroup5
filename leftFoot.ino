@@ -1,12 +1,12 @@
 //Joseph Akselrod rev 0.2.2
 //2-10-21
-//left foot peripheral device 
+//left foot peripheral device
 
 #include <ArduinoBLE.h>
 #include <Filters.h>
-#include <SoftwareSerial.h> 
+#include <SoftwareSerial.h>
 
-//define uuid for all BLE services/characteristics 
+//define uuid for all BLE services/characteristics
 const String left_foot_uuid = "4b072a8c-447a-4552-a49f-3fc072368892";
 const String stream_uuid = "876e1475-1fec-4a95-be64-d1b634f35511";
 const String calibration_uuid = "6532b055-f7ae-4a16-b551-93b58af62518";
@@ -16,7 +16,7 @@ int select = D2;      //Calibration select button (stand>push>wait>sit>push>wait
 int standW = 0;       //default user standing weight (for calibration)
 int sitW = 0;         //default user sitting weight (for calibration)
 int distance = 0;     //default RSSI distance
-int oldCalibrationData = 0;   //default calibration data 
+int oldCalibrationData = 0;   //default calibration data
 int oldStreamData = 0;
 bool keepStreaming = true;
 
@@ -35,16 +35,16 @@ SoftwareSerial rssiBT(0,1); //rx and tx pins
 /*Helper Functions below here*/
 void calibrate()
 {
-  
 
-  
+
+
   //get standing weight, standing RSSI(distance), then sitting weight
   //first get user to stand and press toggle button (select)
   Serial.print("please stand normally and press toggle button");
   if(digitalRead(select)== HIGH)  //if select is pressed
   {
     //get standing weight and RSSI distance
-    int standW = getStandingWeight(); 
+    int standW = getStandingWeight();
     int distance = getStandingRssi();
   }
   delay(1500);
@@ -55,7 +55,7 @@ void calibrate()
   delay(1500);
   String calibrationData = String(standW + sitW + distance);  //send calibration data as a string and parse it in python
     if (calibrationData != oldCalibrationData)                //if cal data is changed
-    {      
+    {
       Serial.print("Calibration data is: ");                  // print it
       Serial.println(calibrationData);
       calibration.writeValue(calibrationData);                //send data through BLE
@@ -70,7 +70,7 @@ void stream()
   int distance = getStandingRssi();
   String streamData = String(standW + distance);  //send calibration data as a string and parse it in python
   if (streamData != oldStreamData) //if stream data is changed
-    {      
+    {
       Serial.print("Stream data is: ");           // print it
       Serial.println(StreamData);
       stream.writeValue(streamData);              //send data thru bLE
@@ -83,56 +83,84 @@ int getStandingWeight()
 }
 int getStandingRssi()
 {
+  int distance = 0;
   //use HC-05 to get RSSI data from Right foot HC05
+  //parse serial data and convert hex data
+  String toBeParsed = rssiBT.read();
+  serialParse(toBeParsed);
+  return distance;
 }
+
 int getSittingWeight()
 {
   return(analogRead(sensorPin));
 }
 
+String serialParse(String array)
+{
+  //THIS IS FUCKING DIFFICULT; SOMEONE HELP WE WITH THIS PLSSSSSS
+  //Parse data from the RSSI serial o/p
+  byte index = 0;
+  ptr = strtok(array, ":;");  // takes a list of delimiters
+  while(ptr != NULL)
+  {
+      strings[index] = ptr;
+      index++;
+      ptr = strtok(NULL, ":;");  // takes a list of delimiters
+  }
+  //print the last part of the string (second )
+  Serial.println(strings[2]); //play with strings[x] until we find correct data
+  String parsedString = strings[2];
+  return parsedString;
+}
+
 void rssiBTSetup()
 {
   //Setup Serial and BT connection for RSSI
-  rssiBT.write(AT+INIT);
-  if(rssiBT.read()
-//AT+INIT 
-//OK
-//AT+IAC=9e8b33
-//OK 
-//AT+CLASS=0
-//AT+INQM=1,9,48
-//AT+INQ
-//+INQ:2:72:D2224,3E0104,FFBC
-//+INQ:1234:56:0,1F1F,FFC1
-//+INQ:1234:56:0,1F1F,FFC0
-//+INQ:1234:56:0,1F1F,FFC1
-//+INQ:2:72:D2224,3F0104,FFAD
-//+INQ:1234:56:0,1F1F,FFBE
-//+INQ:1234:56:0,1F1F,FFC2
-//+INQ:1234:56:0,1F1F,FFBE
-//+INQ:2:72:D2224,3F0104,FFBC OK
+  //Serial AT commands for rssi for inquired device
+  bool loopINQ = true
+  rssiBT.write(AT+INIT\r\n);   //initialize serial port profile
+  //connect to specific BT address
+  rssiBT.write(AT+BIND = 1234,56,abcdef\r\n);  //connect to address 12:34:56:ab:cd:ed
+  delay(500);
+  if(rssiBT.read() == "OK")
+    {
+      rssiBT.write(AT+CLASS=0\r\n);
+      rssiBT.write(AT+INQM = 1,2,48\r\n); //set rssi inquiry for 2 devices up to 60 seconds
+      while(loopINQ == true)
+      {
+        rssiBT.write(AT+INQ\r\n); //gets address, class, and RSSI in hex
+        if(rssiBT.read() == "OK");
+        loopINQ = true;
+      }
+    }
+    else
+    {
+      Serial.print("Connection to other HC05 failed");
+    }
 
-//https://www.instructables.com/How-to-Configure-HC-05-Bluetooth-Module-As-Master-/
+
+      //https://www.instructables.com/How-to-Configure-HC-05-Bluetooth-Module-As-Master-/
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void setup() 
+void setup()
 {
     //serial baud rate at 9600 bps
   Serial.begin(9600);
   rssiBT.begin(38400);  //Baud Rate for AT-command Mode.
-  
+
     //set pinmode
-  pinMode(LED_BUILTIN, OUTPUT); 
+  pinMode(LED_BUILTIN, OUTPUT);
   pinMode(sensorPin, INPUT);
   pinMode(select, INPUT);
 
-  
 
 
-    //initialize BLE  
-  if (!BLE.begin()) 
+
+    //initialize BLE
+  if (!BLE.begin())
   {
     Serial.println("starting BLE failed!");
     while (1);
@@ -148,11 +176,11 @@ void setup()
   stream.writeValue(oldStream);               // set initial value for stream charcteristic
   BLE.advertise();                            // turn on transmission
 }
-  
 
-void loop() 
+
+void loop()
 {
-  
+
   BLEDevice central = BLE.available();
 
   if (central) {
@@ -171,7 +199,7 @@ void loop()
         delay(2000);
       //tx sensor and RSSI data (potentially accelerometer) as stream(loop)
         while(keepStreaming == true)
-          stream();  
+          stream();
     }
     // when the central disconnects, turn off the LED:
     digitalWrite(LED_BUILTIN, LOW);
