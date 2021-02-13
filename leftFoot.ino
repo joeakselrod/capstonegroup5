@@ -23,6 +23,7 @@ bool keepStreaming = true;
 //Create BLE attribure profile (ATT)
 //Create Services for calibration and datastream
 //assign characteristics for corresponding services
+
 BLEService leftFoot(left_foot_uuid);  //should be 128 bit random generated uuid; fuck it for now
 BLECharCharacteristic stream(stream_uuid, BLEWrite);
 BLECharCharacteristic calibration(calibration_uuid, BLEWrite);
@@ -99,23 +100,24 @@ int getSittingWeight()
 String serialParse(char array[])
 {
   //THIS IS FUCKING DIFFICULT; SOMEONE HELP WE WITH THIS PLSSSSSS
-  //Parse data from the RSSI serial o/p
+  //Parse data from the RSSI serial o/p so we get just the rssi hex value
 
-  //need to parse this > +INQ:2:72:D2224,3E0104,FFBC
+  //need to parse this > "+INQ:2:72:D2224,3E0104,FFBC"
+  // to this > "FFBC"
+
   char *strings[10];
   char *ptr = NULL;
-
-  byte index = 0;
-  ptr = strtok(array, ":,");  // takes a list of delimiters
+  int index = 0;
+  ptr = strtok(array, ":,");              // takes a list of delimiters
   while(ptr != NULL)
   {
       strings[index] = ptr;
       index++;
-      ptr = strtok(NULL, ":,");  // takes a list of delimiters
+      ptr = strtok(NULL, ":,");          // takes a list of delimiters
   }
   //print the last part of the string (second )
-  Serial.println(strings[2]); //play with strings[x] until we find correct data
-  String parsedString = strings[2];
+  //Serial.println(strings[5]);
+  String parsedString = strings[5];     //play with strings[x] until we find correct data
   return parsedString;
 }
 
