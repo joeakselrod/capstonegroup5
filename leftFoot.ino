@@ -14,11 +14,11 @@ const char* calibration_uuid = "6532b055-f7ae-4a16-b551-93b58af62518";
 
 int sensorPin = A0;   //Pressure transducer sensor pin
 int select = 2;      //Calibration select button (stand>push>wait>sit>push>wait)
-int standW = 0;       //default user standing weight (for calibration)
-int sitW = 0;         //default user sitting weight (for calibration)
-int distance = 0;     //default RSSI distance
-int oldCalibrationData = 0;   //default calibration data
-int oldStreamData = 0;
+//int standW = 0;       //default user standing weight (for calibration)
+//int sitW = 0;         //default user sitting weight (for calibration)
+//int distance = 0;     //default RSSI distance
+char oldCalibrationData[] = "000000000";   //default calibration data
+char oldStreamData[] = "0000000";
 bool keepStreaming = true;
 
 //Create BLE attribure profile (ATT)
@@ -35,7 +35,14 @@ SoftwareSerial rssiBT(0,1); //rx and tx pins
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*Helper Functions below here*/
-
+char[] readRssiChar(int bufferSize)
+{
+  //convert the "rssiBT.readString" from type String to type char[]
+  String string = rssiBT.readString();
+  char buf[bufferSize];
+  string.toCharArray(buf, bufferSize);
+  return buf[];
+}
 char[] getWeight()
 {
   char output[16];
@@ -49,10 +56,8 @@ char[] getStandingRssi()
   char distance[] = "0000";
   //use HC-05 to get RSSI data from Right foot HC05
   //parse serial data and convert hex data
-  String toBeParsed = rssiBT.readString();
-  char toBeParsedArray[15];                                  //change to num of bytes of serial i/p so it doesnt overflow
-  toBeParsed.toCharArray(toBeParsedArray, 15);
-  distance[] = serialParse(toBeParsedArray);
+  char toBeParsed[] = readRssiChar(20);
+  distance[] = serialParse(toBeParsed);
   return distance[];
 }
 
@@ -95,7 +100,7 @@ char serialParse(char array[])
   //play with strings[x] until we find correct data
   return strings[5];
 }
-void calibrates()
+void calibrates(char oldCalibrationData[])
 {
   //get standing weight, standing RSSI(distance), then sitting weight
   //first get user to stand and press toggle button (select)
@@ -121,7 +126,7 @@ void calibrates()
       oldCalibrationData = calibrationData;                   // and update the calibration data
     }
 }
-void streams()
+void streams(char oldStreamData[])
 {
   Serial.print("Data stream to central: ");
   //get current weight and RSSI data
@@ -142,24 +147,24 @@ void rssiBTSetup()
   //Setup Serial and BT connection for RSSI
   //Serial AT commands for rssi for inquired device
   bool loopINQ = true
-  rssiBT.write(AT+INIT);   //initialize serial port profile
+  rssiBT.write("AT+INIT");   //initialize serial port profile
   //connect to specific BT address
-  rssiBT.write(AT+BIND = 1234,56,abcdef);  //connect to address 12:34:56:ab:cd:ed
+  rssiBT.write("AT+BIND = 1234,56,abcdef");  //connect to address 12:34:56:ab:cd:ed
   delay(500);
-  if(strcmp("OK", rssiBT.read()) == 0);
+  if(strcmp("OK", readRssiChar(4)) == 0)
     {
-      rssiBT.write(AT+CLASS=0);
-      rssiBT.write(AT+INQM = 1,2,48); //set rssi inquiry for 2 devices up to 60 seconds
+      rssiBT.write("AT+CLASS=0");
+      rssiBT.write("AT+INQM = 1,2,48"); //set rssi inquiry for 2 devices up to 60 seconds
       //loop inquiry command so that we dont have timeout on the RSSI connection
       while(loopINQ == true)
       {
-        rssiBT.write(AT+INQ); //gets address, class, and RSSI in hex
-        if(strcmp("OK", rssiBT.read()) == 0);
+        rssiBT.write("AT+INQ"); //gets address, class, and RSSI in hex
+        if(strcmp("OK", readRssiChar(4)) == 0);
         //if there is an "OK" when the serial o/p is finished with inq command, request inq again
         loopINQ = true;
       }
     }
-    else
+   else
     {
       Serial.print("Connection to other HC05 failed");
     }
@@ -220,11 +225,11 @@ void loop()
     {
       //find and tx calibration data
         rssiBTSetup();
-        calibrates();
+        calibrates(oldCalibrationData);
         delay(2000);
       //tx sensor and RSSI data (potentially accelerometer) as stream(loop)
         while(keepStreaming == true)
-          streams();
+          streams(oldStreamData);
     }
     // when the central disconnects, turn off the LED:
     digitalWrite(LED_BUILTIN, LOW);
