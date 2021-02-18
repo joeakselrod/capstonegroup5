@@ -1,10 +1,9 @@
-//Joseph Akselrod rev 0.2.3
-//2-14-21
+//Joseph Akselrod rev 0.2.4
+//2-18-21
 //left foot peripheral device
 
 #include <ArduinoBLE.h>
 //#include <Filters.h>
-#include <SoftwareSerial.h>
 #include <Strings.h>
 
 //define uuid for all BLE services/characteristics
@@ -13,13 +12,15 @@ const char stream_uuid[] = "876e1475-1fec-4a95-be64-d1b634f35511";
 const char calibration_uuid[] = "6532b055-f7ae-4a16-b551-93b58af62518";
 
 int sensorPin = A0;   //Pressure transducer sensor pin
-int select = 2;      //Calibration select button (stand>push>wait>sit>push>wait)
+int selects = 2;      //Calibration selects button (stand>push>wait>sit>push>wait)
 //int standW = 0;       //default user standing weight (for calibration)
 //int sitW = 0;         //default user sitting weight (for calibration)
 //int distance = 0;     //default RSSI distance
 char oldCalibrationData[] = "000000000";   //default calibration data
 char oldStreamData[] = "0000000";
 bool keepStreaming = true;
+
+
 
 //Create BLE attribure profile (ATT)
 //Create Services for calibration and datastream
@@ -30,8 +31,8 @@ BLECharCharacteristic stream("876e1475-1fec-4a95-be64-d1b634f35511", BLEWrite);
 BLECharCharacteristic calibration("6532b055-f7ae-4a16-b551-93b58af62518", BLEWrite);
 
 //Setup Serial Communications to HC05
-SoftwareSerial rssiBT(0,1); //rx and tx pins
-
+//(0,1)rx and tx pins
+UART rssiBT (digitalPinToPinName(1), digitalPinToPinName(0), NC, NC);  // create a hardware serial port named mySerial with RX: pin 13 and TX: pin 8
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*Helper Functions below here*/
@@ -105,18 +106,18 @@ char serialParse(char arrays[])
 void calibrates(char oldCalibrationData[])
 {
   //get standing weight, standing RSSI(distance), then sitting weight
-  //first get user to stand and press toggle button (select)
+  //first get user to stand and press toggle button (selects)
   Serial.print("please stand normally and press toggle button");
-  if(digitalRead(select)== HIGH)  //if select is pressed
+  if(digitalRead(selects)== HIGH)  //if selects is pressed
   {
     //get standing weight and RSSI distance
     char standW[] = getWeight();
     char distance[] = getStandingRssi();
   }
   delay(1500);
-  //have user sit down and press select again
+  //have user sit down and press selects again
   Serial.print("Now sit down and press button; program will start a few seconds after.");
-  if(digitalRead(select) == HIGH)
+  if(digitalRead(selects) == HIGH)
   {
     char sitW[] = getWeight(); //gets sitting weight
   }
@@ -188,7 +189,7 @@ void setup()
     //set pinmode
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(sensorPin, INPUT);
-  pinMode(select, INPUT);
+  pinMode(selects, INPUT);
 
 
 
