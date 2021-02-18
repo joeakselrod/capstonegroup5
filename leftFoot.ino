@@ -8,9 +8,9 @@
 #include <Strings.h>
 
 //define uuid for all BLE services/characteristics
-const char* left_foot_uuid = "4b072a8c-447a-4552-a49f-3fc072368892";
-const char* stream_uuid = "876e1475-1fec-4a95-be64-d1b634f35511";
-const char* calibration_uuid = "6532b055-f7ae-4a16-b551-93b58af62518";
+const char left_foot_uuid[] = "4b072a8c-447a-4552-a49f-3fc072368892";
+const char stream_uuid[] = "876e1475-1fec-4a95-be64-d1b634f35511";
+const char calibration_uuid[] = "6532b055-f7ae-4a16-b551-93b58af62518";
 
 int sensorPin = A0;   //Pressure transducer sensor pin
 int select = 2;      //Calibration select button (stand>push>wait>sit>push>wait)
@@ -61,22 +61,24 @@ char[] getStandingRssi()
   return distance[];
 }
 
-char charConcat(int bufferSize, char firstChar[], char secondChar[])
+char[] charConcat(char *firstChar, char *secondChar)
 {
-  char buf[bufferSize];
-  strcpy(buf,firstChar[]);
-  strcat(buf,secondChar[]);
+  char buf[16];
+  strcpy(buf,*firstChar);
+  strcat(buf,*secondChar);
   return buf[];
 }
-char charConcat(int bufferSize, char firstChar[], char secondChar[], char thirdChar[])
+char[] charConcat(char firstChar[], char secondChar[], char thirdChar[])
 {
-  char buf[bufferSize];
+  char buf[20];
+
   strcpy(buf,firstChar[]);
   strcat(buf,secondChar[]);
   strcat(buf,thirdChar[]);
+  strcat(buf, '\0');
   return buf[];
 }
-char serialParse(char array[])
+char serialParse(char arrays[])
 {
   //THIS IS FUCKING DIFFICULT; SOMEONE HELP WE WITH THIS PLSSSSSS
   //Parse data from the RSSI serial o/p so we get just the rssi hex value
@@ -87,7 +89,7 @@ char serialParse(char array[])
   char *strings[10];
   char *ptr = NULL;
   int index = 0;
-  ptr = strtok(array, ":,");              // takes a list of delimiters
+  ptr = strtok(arrays, ":,");              // takes a list of delimiters
   while(ptr != NULL)
   {
       strings[index] = ptr;
@@ -115,13 +117,15 @@ void calibrates(char oldCalibrationData[])
   //have user sit down and press select again
   Serial.print("Now sit down and press button; program will start a few seconds after.");
   if(digitalRead(select) == HIGH)
+  {
     char sitW[] = getWeight(); //gets sitting weight
+  }
   delay(1500);
-  char calibrationData[] = charConcat(30, standW[], sitW[], distance[]);  //send calibration data as a string and parse it in python
+  char calibrationData[] = charConcat(standW[], sitW[], distance[]);  //send calibration data as a string and parse it in python
     if (calibrationData != oldCalibrationData)                //if cal data is changed
     {
       Serial.print("Calibration data is: ");                  // print it
-      Serial.println(calibrationData);
+      Serial.println(calibrationData[]);
       calibration.writeValue(calibrationData);                //send data through BLE
       oldCalibrationData = calibrationData;                   // and update the calibration data
     }
@@ -132,12 +136,12 @@ void streams(char oldStreamData[])
   //get current weight and RSSI data
   char standW[] = getWeight();
   char distance[] = getStandingRssi();
-  char streamData[] = charConcat(30 , standW[], distance[]);  //send calibration data as a string and parse it in python
+  char streamData[] = charConcat(standW[], distance[]);  //send calibration data as a string and parse it in python
   if (streamData != oldStreamData) //if stream data is changed
     {
       Serial.print("Stream data is: ");           // print it
       Serial.println(StreamData);
-      stream.writeValue(streamData);              //send data thru bLE
+      stream.writeValue(streamData[]);              //send data thru bLE
       oldStreamData = streamData;                 // and update the battery level characteristic
     }
 }
@@ -146,7 +150,7 @@ void rssiBTSetup()
 {
   //Setup Serial and BT connection for RSSI
   //Serial AT commands for rssi for inquired device
-  bool loopINQ = true
+  bool loopINQ = true;
   rssiBT.write("AT+INIT");   //initialize serial port profile
   //connect to specific BT address
   rssiBT.write("AT+BIND = 1234,56,abcdef");  //connect to address 12:34:56:ab:cd:ed
@@ -203,7 +207,7 @@ void setup()
   leftFoot.addCharacteristic(stream);         // add the stream charcteristic
   BLE.addService(leftFoot);                   // Add the service
   calibration.writeValue(oldCalibrationData); // set initial value for calibration characteristic
-  stream.writeValue(oldStream);               // set initial value for stream charcteristic
+  stream.writeValue(oldStreamData);               // set initial value for stream charcteristic
   BLE.advertise();                            // turn on transmission
 }
 
