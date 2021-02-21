@@ -1,6 +1,4 @@
 // A0 - pin 8
-// RX - pin 16
-// TX - pin 17
 
 int analogPin = 8;
 int data = 0;
