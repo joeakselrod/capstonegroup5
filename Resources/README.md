@@ -5,3 +5,7 @@ Pairing the HC-05: https://create.arduino.cc/projecthub/absoluteAbu/arduino-chat
 Accelerometer: https://maker.pro/arduino/tutorial/how-to-use-the-arduino-nano-33-bles-built-in-imu
 
 Help with the pressure: https://create.arduino.cc/projecthub/Juliette/a-diy-smart-insole-to-check-your-pressure-distribution-a5ceae?ref=search&ref_id=foot&offset=11
+
+HC-05 Spec, and pairing info: https://electrosome.com/hc-05-serial-bluetooth-module/
+
+BLE Specs: https://www.etechnophiles.com/arduino-nano-33-ble-sense-pinout-introduction-specifications/#:~:text=3.3V:%20The%203.3V%20pin%20works%20as%20the%20output,5V%20pin%20outputs%205v%20to%20the%20external%20components.
