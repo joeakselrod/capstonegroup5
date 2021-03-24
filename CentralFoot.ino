@@ -1,5 +1,5 @@
-//Joseph Akselrod rev 0.2.5
-//3-20-2021
+//Joseph Akselrod rev 0.2.6
+//3-23-2021
 //Central device
 
 #include <ArduinoBLE.h>
@@ -14,15 +14,20 @@ const char right_foot_uuid[] = "f71ffde7-c9da-434d-9cc9-eb25834cb67a";
 const char right_stream_uuid[] = "55e46e53-d546-49ee-be72-a2cbd47992f1";
 const char right_calibration_uuid[] = "88c51252-497b-46b7-80fd-926865f6169c ";
 
+BLECharCharacteristic leftStream = NULL;
+BLECharCharacteristic rightStream = NULL;
+
+
 //Create BLE attribure profile (ATT)for central
 //Create Services for read left
 //assign characteristics for corresponding services
 
 
+
 //Helper functions------------------------------------------------------------------------------------
 
 //getPeriph() subscribes to a BLE service such as "leftStream" allows for automatic notification from peripheral to central
-void getPeriph(BLEDevice peripheral, char serviceUuid[], char streamUuid[], char calibrateUuid[], BLECharCharacteristic stream, BLECharCharacteristic calibrate)
+void getPeriph(BLEDevice peripheral, char *serviceUuid[], char *streamUuid, char *calibrateUuid, BLECharCharacteristic *stream, BLECharCharacteristic *calibrate)
 {
   // check if a peripheral has been discovered
   BLEDevice peripheral = BLE.available();
@@ -43,7 +48,8 @@ void getPeriph(BLEDevice peripheral, char serviceUuid[], char streamUuid[], char
       // stop scanning
       BLE.stopScan();
       //subscribe to the characteristics of the peripheral
-      BLECharCharacteristic stream = peripheral.characteristic(calibrateUuid);
+      BLECharCharacteristic calibrate = peripheral.characteristic(calibrateUuid);
+      BLECharCharacteristic stream = peripheral.characteristic(streamUuid);
         // subscribe to the simple key characteristic
     Serial.println("Subscribing to calibrate characteristic ...");
      if (!simpleKeyCharacteristic) {
@@ -95,6 +101,14 @@ void setup()
 
 void loop()
 {
-  //serial print calibration data and then stream datastream
+  //calibrate data once
+Serial.println(leftCalibrate);
+Serial.println(leftCalibrate);
 
+  while(1)
+  {
+  Serial.println(leftStream);
+  Serial.println(rightStream);
+  //serial print calibration data and then stream datastream
+  }
 }
