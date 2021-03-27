@@ -14,9 +14,6 @@ const char right_foot_uuid[] = "f71ffde7-c9da-434d-9cc9-eb25834cb67a";
 const char right_stream_uuid[] = "55e46e53-d546-49ee-be72-a2cbd47992f1";
 const char right_calibration_uuid[] = "88c51252-497b-46b7-80fd-926865f6169c ";
 
-//Create BLEDevice objects for peripherals
-BLEDevice leftFoot = BLE.peripheral();
-BLEDevice rightFoot = BLE.peripheral();
 
 
 //Create BLE attribure profile (ATT)for central
@@ -53,13 +50,10 @@ void setup()
       Serial.print(leftFoot.advertisedServiceUuid());
       Serial.println();
 
-      // see if peripheral is the one we are looking for based on uuid
-      if (strcmp(leftFoot.advertisedServiceUuid(), "4b072a8c-447a-4552-a49f-3fc072368892") == 0)
-      {
         // stop scanning
         BLE.stopScan();
         //subscribe to the characteristics of the peripheral
-        BLECharCharacteristic leftCalibrate = leftFoot.characteristic("6532b055-f7ae-4a16-b551-93b58af62518");
+        BLECharacteristic leftCalibrate = leftFoot.characteristic("6532b055-f7ae-4a16-b551-93b58af62518");
 
           // subscribe to the simple key characteristic
         Serial.println("Subscribing to calibrate characteristic ...");
@@ -94,7 +88,7 @@ void setup()
 
         //Now We subscribe to the left foot stream characteristic
 
-        BLECharCharacteristic leftStream = leftFoot.characteristic("876e1475-1fec-4a95-be64-d1b634f35511");
+        BLECharacteristic leftStream = leftFoot.characteristic("876e1475-1fec-4a95-be64-d1b634f35511");
 
           // subscribe to the simple key characteristic
         Serial.println("Subscribing to stream characteristic ...");
@@ -126,7 +120,7 @@ void setup()
           // do nothing
         }
      }
-    }
+
 
 
 
@@ -151,12 +145,11 @@ void setup()
         Serial.println();
 
         // see if peripheral is the one we are looking for based on uuid
-        if (strcmp(rightFoot.advertisedServiceUuid(), "f71ffde7-c9da-434d-9cc9-eb25834cb67a") == 0)
-        {
+
           // stop scanning
           BLE.stopScan();
           //subscribe to the characteristics of the peripheral
-          BLECharCharacteristic rightCalibrate = rightFoot.characteristic("88c51252-497b-46b7-80fd-926865f6169c");
+          BLECharacteristic rightCalibrate = rightFoot.characteristic("88c51252-497b-46b7-80fd-926865f6169c");
 
             // subscribe to the simple key characteristic
           Serial.println("Subscribing to calibrate characteristic ...");
@@ -188,7 +181,7 @@ void setup()
             // do nothing
           }
           //////////////////////////////////////////////////////
-          BLECharCharacteristic rightStream = rightFoot.characteristic("55e46e53-d546-49ee-be72-a2cbd47992f1");
+          BLECharacteristic rightStream = rightFoot.characteristic("55e46e53-d546-49ee-be72-a2cbd47992f1");
 
             // subscribe to the simple key characteristic
           Serial.println("Subscribing to stream characteristic ...");
@@ -220,7 +213,7 @@ void setup()
             // do nothing
           }
        }
-      }
+
 }
 
 
@@ -228,13 +221,14 @@ void setup()
 void loop()
 {
   //calibrate data once
-Serial.println(leftCalibrate);
-Serial.println(rightCalibrate);
+  Serial.println(leftFoot.leftCalibrate);
+  Serial.println(rightFoot.rightCalibrate);
 
+  //loop the streams
   while(1)
   {
-  Serial.println(leftStream);
-  Serial.println(rightStream);
-  //serial print calibration data and then stream datastream
+    Serial.println(leftFoot.leftStream);
+    Serial.println(rightFoot.rightStream);
+   //serial print calibration data and then stream datastream
   }
 }
